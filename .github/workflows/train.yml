@@ -1,0 +1,42 @@
+name: scm-train
+on:
+  workflow_dispatch:
+    inputs:
+      job_id: {description: job, required: true}
+      base_model: {description: base, required: true}
+      dataset: {description: dataset, required: true}
+      model_repo: {description: model repo, required: true}
+      epochs: {description: epochs, default: "2"}
+      lora_r: {description: rank, default: "16"}
+      lora_alpha: {description: alpha, default: "32"}
+      maxlen: {description: max tokens per pair, default: "512"}
+      max_minutes: {description: time limit, default: "300"}
+      callback_url: {description: callback, required: true}
+jobs:
+  train:
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: install
+        run: |
+          pip install torch --index-url https://download.pytorch.org/whl/cpu
+          pip install transformers peft huggingface_hub accelerate
+      - name: train
+        run: python train.py
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          JOB_TOKEN: ${{ secrets.JOB_TOKEN }}
+          JOB_ID: ${{ inputs.job_id }}
+          BASE_MODEL: ${{ inputs.base_model }}
+          DATASET: ${{ inputs.dataset }}
+          MODEL_REPO: ${{ inputs.model_repo }}
+          EPOCHS: ${{ inputs.epochs }}
+          LORA_R: ${{ inputs.lora_r }}
+          LORA_ALPHA: ${{ inputs.lora_alpha }}
+          MAXLEN: ${{ inputs.maxlen }}
+          MAX_MINUTES: ${{ inputs.max_minutes }}
+          CALLBACK_URL: ${{ inputs.callback_url }}
